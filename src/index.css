@@ -1,0 +1,130 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Montserrat:wght@200;300;400;500&family=DM+Sans:wght@300;400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Lambrechts: strak wit + subtiele grijstinten, rood enkel als CTA-accent */
+    --background: 0 0% 100%;
+    --foreground: 220 10% 16%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 10% 16%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 10% 16%;
+
+    /* Lambrechts-rood — exact uit logo (CTA's, verzendknop, actieve elementen) */
+    --primary: 2 72% 51%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 10% 96%;
+    --secondary-foreground: 220 10% 22%;
+
+    --muted: 220 10% 96%;
+    --muted-foreground: 220 6% 46%;
+
+    --accent: 220 10% 95%;
+    --accent-foreground: 220 10% 22%;
+
+    --destructive: 2 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 12% 92%;
+    --input: 220 12% 92%;
+    --ring: 2 72% 51%;
+
+    --radius: 0.75rem;
+
+    --chat-surface: 0 0% 100%;
+    --chat-bubble-ai: 220 10% 96%;
+    --chat-bubble-user: 2 72% 51%;
+    --gold: 2 72% 51%;
+    --gold-light: 2 65% 96%;
+
+    /* Elegante typografie */
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-body: 'Montserrat', 'DM Sans', system-ui, sans-serif;
+
+    /* Soft ambient shadows — laat elementen zweven */
+    --shadow-soft: 0 1px 2px hsl(220 12% 18% / 0.03), 0 8px 24px -8px hsl(220 12% 18% / 0.06);
+    --shadow-float: 0 2px 4px hsl(220 12% 18% / 0.02), 0 24px 48px -16px hsl(220 12% 18% / 0.08);
+    --shadow-cta: 0 4px 16px -4px hsl(2 72% 51% / 0.28), 0 2px 6px -2px hsl(2 72% 51% / 0.18);
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+    font-weight: 300;
+    line-height: 1.75;
+    letter-spacing: 0.005em;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+  }
+  p {
+    line-height: 1.8;
+  }
+}
+
+@layer utilities {
+  .marble-gradient {
+    background:
+      radial-gradient(ellipse at 15% 10%, hsl(220 10% 99%) 0%, transparent 55%),
+      radial-gradient(ellipse at 85% 90%, hsl(220 10% 98%) 0%, transparent 50%),
+      linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(0 0% 100%) 100%);
+  }
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+  .shadow-float {
+    box-shadow: var(--shadow-float);
+  }
+  .shadow-cta {
+    box-shadow: var(--shadow-cta);
+  }
+  .cta-red {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .cta-red:hover {
+    background: hsl(2 72% 47%);
+    box-shadow: 0 6px 20px -4px hsl(2 72% 51% / 0.38);
+    transform: translateY(-1px);
+  }
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .animate-fade-up {
+    animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  .animate-fade-in {
+    animation: fade-in 0.6s ease-out forwards;
+  }
+}
