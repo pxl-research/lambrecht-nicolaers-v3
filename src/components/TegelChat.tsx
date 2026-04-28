@@ -250,11 +250,24 @@ const TegelChat = () => {
             Digitale interieuradviseur · Tongeren
           </span>
         </div>
-        <div className="ml-auto flex items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-primary/80 animate-pulse" />
-          <span className="text-[10px] text-muted-foreground/70 font-body font-light tracking-[0.15em] uppercase">
-            Online
-          </span>
+        <div className="ml-auto flex items-center gap-4">
+          <div className="hidden sm:flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-primary/80 animate-pulse" />
+            <span className="text-[10px] text-muted-foreground/70 font-body font-light tracking-[0.15em] uppercase">
+              Online
+            </span>
+          </div>
+          {started && (
+            <button
+              onClick={handleNewConversation}
+              disabled={isStreaming}
+              title="Nieuw gesprek starten"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/70 text-primary text-[11px] font-body font-medium tracking-[0.15em] uppercase hover:bg-primary hover:text-primary-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <RefreshCw className="w-3.5 h-3.5" strokeWidth={1.75} />
+              <span className="hidden sm:inline">Nieuw gesprek</span>
+            </button>
+          )}
         </div>
       </div>
 
