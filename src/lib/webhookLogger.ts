@@ -120,6 +120,8 @@ function formatGesprek(turns: ConversationTurn[]): string {
     .join("\n\n");
 }
 
+export type AdviesStatus = "Voltooid" | "Niet afgerond";
+
 export interface ExcelPayload {
   Datum: string;
   Kamer: string;
@@ -129,11 +131,13 @@ export interface ExcelPayload {
   Plaatsing: string;
   Advies_box: string;
   Volledig_Gesprek: string;
+  status: AdviesStatus;
 }
 
 export function buildPayload(
   advies: AdviesPayload,
-  turns: ConversationTurn[]
+  turns: ConversationTurn[],
+  status: AdviesStatus = "Voltooid"
 ): ExcelPayload {
   return {
     Datum: new Date().toISOString(),
@@ -144,6 +148,7 @@ export function buildPayload(
     Plaatsing: advies.Plaatsing,
     Advies_box: advies.Advies_box,
     Volledig_Gesprek: formatGesprek(turns),
+    status,
   };
 }
 
