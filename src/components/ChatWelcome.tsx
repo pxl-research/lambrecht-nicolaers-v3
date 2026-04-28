@@ -16,7 +16,7 @@ const ChatWelcome = ({ onStart }: ChatWelcomeProps) => {
       <h1 className="font-display text-4xl md:text-5xl font-normal text-foreground mb-5 tracking-tight leading-[1.15]">
         Lambrechts-Nicolaers
       </h1>
-      <p className="text-[10px] text-muted-foreground/70 font-body font-light tracking-[0.2em] uppercase mb-5 -mt-3">
+      <p className="text-[10px] text-[#1F2937] font-body font-medium tracking-[0.2em] uppercase mb-5 -mt-3">
         Digitale interieuradviseur · Tongeren
       </p>
 
