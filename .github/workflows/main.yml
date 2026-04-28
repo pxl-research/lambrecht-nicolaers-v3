@@ -18,6 +18,7 @@ jobs:
           
       - name: Build for production
         run: |
+          npm install
           npm ci
           npm run build-stage --if-present
       
