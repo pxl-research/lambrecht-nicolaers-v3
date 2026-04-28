@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { RefreshCw } from "lucide-react";
 import ChatWelcome from "./ChatWelcome";
 import ChatMessage from "./ChatMessage";
 import ChatInput from "./ChatInput";
@@ -7,10 +8,13 @@ import { streamPuterChat, type ChatMessage as AIChatMessage } from "@/lib/puterA
 import {
   stripLogBlock,
   extractAdvies,
+  inferAdviesFromTurns,
   sendToExcel,
   buildPayload,
   type ConversationTurn,
 } from "@/lib/webhookLogger";
+import { findBestMatch, formatAdvice, type MatchCriteria } from "@/lib/tegelMatcher";
+import { detectKennisQuery, lookupKennis, formatKennisContext } from "@/lib/tegelKennis";
 import { findBestMatch, formatAdvice, type MatchCriteria } from "@/lib/tegelMatcher";
 import { detectKennisQuery, lookupKennis, formatKennisContext } from "@/lib/tegelKennis";
 
