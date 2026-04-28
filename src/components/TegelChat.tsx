@@ -252,7 +252,7 @@ const TegelChat = () => {
         </div>
         <div className="ml-auto flex items-center gap-4">
           <div className="hidden sm:flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-primary/80 animate-pulse" />
+            <div className="w-1.5 h-1.5 rounded-full animate-pulse bg-lime-500" />
             <span className="text-[10px] text-[#374151] font-body font-medium tracking-[0.15em] uppercase">
               Online
             </span>
