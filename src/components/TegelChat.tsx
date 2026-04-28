@@ -15,8 +15,6 @@ import {
 } from "@/lib/webhookLogger";
 import { findBestMatch, formatAdvice, type MatchCriteria } from "@/lib/tegelMatcher";
 import { detectKennisQuery, lookupKennis, formatKennisContext } from "@/lib/tegelKennis";
-import { findBestMatch, formatAdvice, type MatchCriteria } from "@/lib/tegelMatcher";
-import { detectKennisQuery, lookupKennis, formatKennisContext } from "@/lib/tegelKennis";
 
 interface Message {
   id: string;
