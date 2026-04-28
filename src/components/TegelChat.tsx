@@ -246,14 +246,14 @@ const TegelChat = () => {
           <span className="font-display text-[20px] font-normal text-foreground leading-tight tracking-tight">
             Lambrechts-Nicolaers
           </span>
-          <span className="text-[10px] text-muted-foreground/70 font-body font-light tracking-[0.2em] uppercase mt-1">
+          <span className="text-[10px] text-[#1F2937] font-body font-medium tracking-[0.2em] uppercase mt-1">
             Digitale interieuradviseur · Tongeren
           </span>
         </div>
         <div className="ml-auto flex items-center gap-4">
           <div className="hidden sm:flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-primary/80 animate-pulse" />
-            <span className="text-[10px] text-muted-foreground/70 font-body font-light tracking-[0.15em] uppercase">
+            <span className="text-[10px] text-[#374151] font-body font-medium tracking-[0.15em] uppercase">
               Online
             </span>
           </div>
