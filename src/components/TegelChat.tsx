@@ -58,6 +58,38 @@ const TegelChat = () => {
   };
 
   /**
+   * Start een nieuw gesprek: logt eerst het huidige (onvoltooide) gesprek
+   * naar de webhook met status "Niet afgerond", en reset daarna alles.
+   */
+  const handleNewConversation = async () => {
+    // Alleen loggen als er daadwerkelijk een gesprek is geweest én het advies
+    // nog niet als "Voltooid" is verzonden.
+    if (messages.length > 0 && !adviceSentRef.current) {
+      const turns: ConversationTurn[] = messages.map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
+
+      // Probeer eerst LOG_JSON uit het laatste assistant-bericht; anders inferen.
+      const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
+      const fromLog = lastAssistant ? extractAdvies(lastAssistant.content) : null;
+      const advies =
+        fromLog ?? inferAdviesFromTurns(turns, "");
+
+      const payload = buildPayload(advies, turns, "Niet afgerond");
+      console.log("[Excel-log] Niet afgerond — verzenden:", payload);
+      const error = await sendToExcel(payload);
+      console.log("[Excel-log] Resultaat:", error ?? "OK");
+    }
+
+    // Reset alle interne state naar beginwaarden
+    adviceSentRef.current = false;
+    setMessages([]);
+    setIsStreaming(false);
+    setStarted(false);
+  };
+
+  /**
    * Verwerkt een voltooid AI-bericht: detecteert LOG_JSON, doet Supabase-match
    * en voegt het echte advies (Box + Formaat uit Data LN) toe als nieuw bericht.
    */
