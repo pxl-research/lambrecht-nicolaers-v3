@@ -8,7 +8,7 @@
   :root {
     /* Lambrechts: strak wit + subtiele grijstinten, rood enkel als CTA-accent */
     --background: 0 0% 100%;
-    --foreground: 220 10% 16%;
+    --foreground: 220 14% 10%;
 
     --card: 0 0% 100%;
     --card-foreground: 220 10% 16%;
@@ -75,6 +75,12 @@
     line-height: 1.75;
     letter-spacing: 0.005em;
     -webkit-font-smoothing: antialiased;
+  }
+  html,
+  body,
+  #root {
+    height: 100%;
+    overflow: hidden;
   }
   h1, h2, h3, h4 {
     font-family: var(--font-display);
