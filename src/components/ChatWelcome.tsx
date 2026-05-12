@@ -6,25 +6,17 @@ interface ChatWelcomeProps {
 
 const ChatWelcome = ({ onStart }: ChatWelcomeProps) => {
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center px-10 py-16 animate-fade-in">
+    <div className="flex flex-col items-center text-center px-10 py-8 animate-fade-in h-full overflow-y-auto">
       {/* Icon */}
-      <div className="w-14 h-14 rounded-full bg-secondary/60 flex items-center justify-center mb-10">
+      <div className="w-14 h-14 rounded-full bg-secondary/60 flex items-center justify-center mb-6">
         <MessageSquare className="w-6 h-6 text-muted-foreground" strokeWidth={1.25} />
       </div>
 
-      {/* Heading */}
-      <h1 className="font-display text-4xl md:text-5xl font-normal text-foreground mb-5 tracking-tight leading-[1.15]">
-        Lambrechts-Nicolaers
-      </h1>
-      <p className="text-[10px] text-[#1F2937] font-body font-medium tracking-[0.2em] uppercase mb-5 -mt-3">
-        Digitale interieuradviseur · Tongeren
-      </p>
-
       {/* Divider */}
-      <div className="w-10 h-px bg-primary/60 mb-8" />
+      <div className="w-10 h-px bg-primary/60 mb-6" />
 
       {/* Subtitle */}
-      <p className="text-muted-foreground font-body font-light text-[15px] md:text-base max-w-md leading-[1.85] mb-12">
+      <p className="text-muted-foreground font-body font-light text-[15px] md:text-base max-w-md leading-[1.7] mb-8">
         Welkom bij Lambrechts-Nicolaers in Tongeren. Wij begeleiden u persoonlijk
         naar de tegel die perfect past bij uw interieur — in alle rust, met deskundig advies.
       </p>
@@ -37,14 +29,14 @@ const ChatWelcome = ({ onStart }: ChatWelcomeProps) => {
         Start uw zoektocht
       </button>
 
-      {/* Trust indicators */}
-      <div className="flex items-center gap-8 mt-16 text-[#374151] text-[11px] font-body font-medium tracking-[0.15em] uppercase">
-        <span>Persoonlijk advies</span>
-        <span className="w-1 h-1 rounded-full bg-[#374151]/60" />
-        <span>2000+ tegels</span>
-        <span className="w-1 h-1 rounded-full bg-[#374151]/60" />
-        <span>Gratis inspiratie</span>
-      </div>
+      {/* Disclaimer */}
+      <p className="mt-6 max-w-md text-[11px] text-muted-foreground font-body font-light leading-[1.7]">
+        Deze adviseur maakt deel uit van een onderzoeksproject en kan dus nog foutjes maken.
+        Indien iets onduidelijk of foutief is, gelieve dan het personeel te contacteren, zij zullen
+        je de juiste informatie geven. De ingevoerde informatie wordt anoniem verwerkt en enkel
+        voor onderzoeksdoeleinden gebruikt. Deze assistent dient enkel in de fysieke winkel getest
+        te worden.
+      </p>
     </div>
   );
 };

@@ -17,6 +17,8 @@ export const COL = {
   // PLAATSING: niet aanwezig in Data LN — wordt alleen in conversatie/log gebruikt, niet voor matching
   BOX: "Box",
   FORMAAT: "Formaat (cm)",
+  VLOER_WAND: "Vloer/Wand", // F* = vloer, W* = wand
+  PREFERENTIE: "Preferentiële boxen", // "aangeraden voor [look]" | "niet aangeraden" | leeg
 } as const;
 
 // Tolerant rij-type — kolomnamen bevatten spaties en haakjes, dus indexed access.
