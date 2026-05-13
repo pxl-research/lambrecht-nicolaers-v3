@@ -49,7 +49,7 @@ export function extractAdvies(text: string): AdviesPayload | null {
       Kleur: String(parsed.Kleur ?? ""),
       Huisdieren: String(parsed.Huisdieren ?? ""),
       Plaatsing: String(parsed.Plaatsing ?? ""),
-      Advies_box: String(parsed.Advies_box ?? ""),
+      Advies_box: String(parsed.Advies_expo ?? parsed.Advies_box ?? ""),
     };
   } catch {
     return null;
@@ -57,8 +57,8 @@ export function extractAdvies(text: string): AdviesPayload | null {
 }
 
 export function detectBox(text: string): string | null {
-  const m = text.match(/\bBox\s*(\d{1,3})\b/i);
-  return m ? `Box ${m[1]}` : null;
+  const m = text.match(/\b(?:Expo|Box)\s*(\d{1,3})\b/i);
+  return m ? `Expo ${m[1]}` : null;
 }
 
 export function inferAdviesFromTurns(
@@ -157,7 +157,7 @@ function formatAdviesBlok(
     const lines: string[] = [];
     lines.push(`Assistent: [${title}]`);
     const b = normalizeBoxValue(box);
-    if (b) lines.push(`- Hoofdmatch: Box ${b}`);
+    if (b) lines.push(`- Hoofdmatch: Expo ${b}`);
     if (formaat) lines.push(`- Formaat: ${formaat} cm`);
     if (look) lines.push(`- Look: ${look}`);
     if (kleur) lines.push(`- Kleur: ${kleur}`);
@@ -166,7 +166,7 @@ function formatAdviesBlok(
       altList.forEach((a, i) => {
         const ab = normalizeBoxValue(a.box);
         const parts = [
-          ab ? `Box ${ab}` : "",
+          ab ? `Expo ${ab}` : "",
           a.formaat ? `${a.formaat} cm` : "",
           a.omschrijving || "",
         ].filter(Boolean);
@@ -246,29 +246,29 @@ export interface ExcelPayload {
   Kleur: string;
   Huisdieren: string;
   Plaatsing: string;
-  Advies_box: string;
+  Advies_expo: string;
   Advies_formaat: string;
   Advies_look: string;
   Advies_kleur: string;
-  Alt1_box: string;
+  Alt1_expo: string;
   Alt1_formaat: string;
   Alt1_omschrijving: string;
-  Alt2_box: string;
+  Alt2_expo: string;
   Alt2_formaat: string;
   Alt2_omschrijving: string;
-  Alt3_box: string;
+  Alt3_expo: string;
   Alt3_formaat: string;
   Alt3_omschrijving: string;
   // Tweede advies (bij toepassing "beide": vloer + wand)
   Advies2_label: string;
-  Advies2_box: string;
+  Advies2_expo: string;
   Advies2_formaat: string;
   Advies2_look: string;
   Advies2_kleur: string;
-  Alt2_1_box: string;
+  Alt2_1_expo: string;
   Alt2_1_formaat: string;
   Alt2_1_omschrijving: string;
-  Alt2_2_box: string;
+  Alt2_2_expo: string;
   Alt2_2_formaat: string;
   Alt2_2_omschrijving: string;
   Volledig_Gesprek: string;
@@ -310,28 +310,28 @@ export function buildPayload(
     Kleur: advies.Kleur,
     Huisdieren: advies.Huisdieren,
     Plaatsing: advies.Plaatsing,
-    Advies_box: normalizeBoxValue(advies.Advies_box),
+    Advies_expo: normalizeBoxValue(advies.Advies_box),
     Advies_formaat: details?.formaat ?? "",
     Advies_look: details?.look ?? "",
     Advies_kleur: details?.kleur ?? "",
-    Alt1_box: normalizeBoxValue(a1.box),
+    Alt1_expo: normalizeBoxValue(a1.box),
     Alt1_formaat: a1.formaat,
     Alt1_omschrijving: a1.omschrijving,
-    Alt2_box: normalizeBoxValue(a2.box),
+    Alt2_expo: normalizeBoxValue(a2.box),
     Alt2_formaat: a2.formaat,
     Alt2_omschrijving: a2.omschrijving,
-    Alt3_box: normalizeBoxValue(a3.box),
+    Alt3_expo: normalizeBoxValue(a3.box),
     Alt3_formaat: a3.formaat,
     Alt3_omschrijving: a3.omschrijving,
     Advies2_label: sec?.label ?? "",
-    Advies2_box: normalizeBoxValue(sec?.box ?? ""),
+    Advies2_expo: normalizeBoxValue(sec?.box ?? ""),
     Advies2_formaat: sec?.formaat ?? "",
     Advies2_look: sec?.look ?? "",
     Advies2_kleur: sec?.kleur ?? "",
-    Alt2_1_box: normalizeBoxValue(s1.box),
+    Alt2_1_expo: normalizeBoxValue(s1.box),
     Alt2_1_formaat: s1.formaat,
     Alt2_1_omschrijving: s1.omschrijving,
-    Alt2_2_box: normalizeBoxValue(s2.box),
+    Alt2_2_expo: normalizeBoxValue(s2.box),
     Alt2_2_formaat: s2.formaat,
     Alt2_2_omschrijving: s2.omschrijving,
     Volledig_Gesprek: (() => {
