@@ -56,10 +56,23 @@ const MAX_OFF_TOPIC = 3;
 const OFF_TOPIC_REFUSAL_MARKER =
   "als interieuradviseur van Lambrechts-Nicolaers ben ik gespecialiseerd in tegels en vloeren";
 
+// === Vinyl-afhandeling ===
+const VINYL_REGEX = /\b(vinyl|vinylvloer|vinylvloeren|pvc|pvc-vloer|floorify|lamett)\b/i;
+const VINYL_REPLY =
+  "Op de eerste verdieping kan je vinyl vloeren terug vinden van Floorify en Lamett. Voor meer informatie over deze vloeren, zal een verkoper u persoonlijk advies geven. Wilt u nog verder kijken voor tegels?";
+
+const isAffirmative = (text: string): boolean => {
+  const t = text.toLowerCase().trim();
+  if (!t) return false;
+  if (/\b(nee|neen|nope|niet|geen|stop|hoeft niet|laat maar|dat was alles|ander(e)? keer)\b/.test(t)) return false;
+  return /\b(ja|jaa+|jawel|graag|zeker|oké|ok(e|é)?|prima|tuurlijk|natuurlijk|doe maar|ga door|verder|klopt|inderdaad|voor)\b/.test(t);
+};
+
 const TegelChat = () => {
   const [started, setStarted] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [conversationEnded, setConversationEnded] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const adviceSentRef = useRef<boolean>(false);
   const warnedRef = useRef<boolean>(false);
@@ -67,6 +80,7 @@ const TegelChat = () => {
   const offTopicCountRef = useRef<number>(0);
   const gratieResetsGebruiktRef = useRef<number>(0);
   const terminatedRef = useRef<boolean>(false);
+  const vinylPendingRef = useRef<boolean>(false);
 
   const userMessageCount = messages.filter((m) => m.role === "user").length;
   const limitReached = userMessageCount >= MAX_USER_MESSAGES;
@@ -158,6 +172,8 @@ const TegelChat = () => {
     offTopicCountRef.current = 0;
     gratieResetsGebruiktRef.current = 0;
     terminatedRef.current = false;
+    vinylPendingRef.current = false;
+    setConversationEnded(false);
     setMessages([]);
     setIsStreaming(false);
     setStarted(false);
@@ -644,13 +660,45 @@ const TegelChat = () => {
   };
 
   const handleSend = async (content: string) => {
-    if (limitReachedRef.current || terminatedRef.current || adviceGiven) return;
+    if (limitReachedRef.current || terminatedRef.current || adviceGiven || conversationEnded) return;
 
     const userMsg: Message = {
       id: Date.now().toString() + "user",
       content,
       role: "user",
     };
+
+    // === Vinyl-flow: wacht op ja/nee na het vaste vinyl-antwoord ===
+    if (vinylPendingRef.current) {
+      vinylPendingRef.current = false;
+      if (isAffirmative(content)) {
+        // Klant wil verder met tegels → reguliere flow vanaf hier hervatten.
+        // (Val door naar de standaard handleSend-logica hieronder.)
+      } else {
+        // Klant wil niets meer → gesprek netjes beëindigen.
+        const farewell: Message = {
+          id: Date.now().toString() + "-vinyl-end",
+          role: "assistant",
+          content:
+            "Bedankt voor uw bezoek. Onze verkopers helpen u graag verder in de showroom. Tot snel!",
+        };
+        setMessages((prev) => [...prev, userMsg, farewell]);
+        setConversationEnded(true);
+        return;
+      }
+    }
+
+    // === Vinyl-trigger: pauzeer de tegel-flow met een vast antwoord ===
+    if (VINYL_REGEX.test(content)) {
+      const vinylMsg: Message = {
+        id: Date.now().toString() + "-vinyl",
+        role: "assistant",
+        content: VINYL_REPLY,
+      };
+      vinylPendingRef.current = true;
+      setMessages((prev) => [...prev, userMsg, vinylMsg]);
+      return;
+    }
 
     // Bereken de nieuwe count INCL. dit bericht
     const newCount = userMessageCount + 1;
@@ -869,7 +917,7 @@ const TegelChat = () => {
           </div>
           <div className="mx-8 h-px bg-border/60" />
 
-          {adviceGiven ? (
+          {adviceGiven || conversationEnded ? (
             <div className="flex justify-center px-8 py-6 bg-card">
               <button
                 onClick={handleNewConversation}
