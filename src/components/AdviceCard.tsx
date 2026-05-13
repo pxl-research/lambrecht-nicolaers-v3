@@ -29,7 +29,7 @@ interface AdviceCardProps {
 function normalizeBoxLabel(box: string): string {
   if (!box) return "";
   const m = box.match(/(\d{1,4})/);
-  return m ? `Box ${m[1]}` : box;
+  return m ? `Expo ${m[1]}` : box;
 }
 
 const Section = ({ section }: { section: AdviceSection }) => {
@@ -79,7 +79,7 @@ const Section = ({ section }: { section: AdviceSection }) => {
                 key={a.box}
                 className="text-[13px] text-foreground font-light leading-snug"
               >
-                <span className="font-semibold text-primary">Box {a.box}</span>
+                <span className="font-semibold text-primary">Expo {a.box}</span>
                 <span className="text-muted-foreground"> — </span>
                 <span>{a.formaat ? `${a.formaat} cm` : "—"}</span>
                 <span className="text-muted-foreground"> — </span>
@@ -129,7 +129,7 @@ const AdviceCard = ({
               <div className="flex items-center gap-2 mb-1">
                 <MapPin className="w-4 h-4 text-primary" strokeWidth={1.75} />
                 <span className="font-semibold text-foreground">
-                  Aanbevolen boxen{kamer ? ` voor de ${kamer}` : ""}:
+                  Aanbevolen expo's{kamer ? ` voor de ${kamer}` : ""}:
                 </span>
               </div>
               <div className="flex flex-wrap gap-2 mt-2 ml-6">
@@ -138,7 +138,7 @@ const AdviceCard = ({
                     key={b}
                     className="px-3 py-1 rounded-full bg-primary/10 text-primary text-[13px] font-medium"
                   >
-                    Box {b}
+                    Expo {b}
                   </span>
                 ))}
               </div>
@@ -183,7 +183,7 @@ const AdviceCard = ({
                   key={a.box}
                   className="text-[14px] text-foreground font-light leading-snug"
                 >
-                  <span className="font-semibold text-primary">Box {a.box}</span>
+                  <span className="font-semibold text-primary">Expo {a.box}</span>
                   <span className="text-muted-foreground"> — </span>
                   <span>{a.formaat ? `${a.formaat} cm` : "—"}</span>
                   <span className="text-muted-foreground"> — </span>
