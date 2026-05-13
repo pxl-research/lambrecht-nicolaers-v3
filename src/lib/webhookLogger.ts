@@ -49,7 +49,7 @@ export function extractAdvies(text: string): AdviesPayload | null {
       Kleur: String(parsed.Kleur ?? ""),
       Huisdieren: String(parsed.Huisdieren ?? ""),
       Plaatsing: String(parsed.Plaatsing ?? ""),
-      Advies_box: String(parsed.Advies_box ?? ""),
+      Advies_box: String(parsed.Advies_expo ?? parsed.Advies_box ?? ""),
     };
   } catch {
     return null;
@@ -57,8 +57,8 @@ export function extractAdvies(text: string): AdviesPayload | null {
 }
 
 export function detectBox(text: string): string | null {
-  const m = text.match(/\bBox\s*(\d{1,3})\b/i);
-  return m ? `Box ${m[1]}` : null;
+  const m = text.match(/\b(?:Expo|Box)\s*(\d{1,3})\b/i);
+  return m ? `Expo ${m[1]}` : null;
 }
 
 export function inferAdviesFromTurns(
@@ -157,7 +157,7 @@ function formatAdviesBlok(
     const lines: string[] = [];
     lines.push(`Assistent: [${title}]`);
     const b = normalizeBoxValue(box);
-    if (b) lines.push(`- Hoofdmatch: Box ${b}`);
+    if (b) lines.push(`- Hoofdmatch: Expo ${b}`);
     if (formaat) lines.push(`- Formaat: ${formaat} cm`);
     if (look) lines.push(`- Look: ${look}`);
     if (kleur) lines.push(`- Kleur: ${kleur}`);
@@ -166,7 +166,7 @@ function formatAdviesBlok(
       altList.forEach((a, i) => {
         const ab = normalizeBoxValue(a.box);
         const parts = [
-          ab ? `Box ${ab}` : "",
+          ab ? `Expo ${ab}` : "",
           a.formaat ? `${a.formaat} cm` : "",
           a.omschrijving || "",
         ].filter(Boolean);
