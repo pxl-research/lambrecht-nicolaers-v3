@@ -165,7 +165,7 @@ export function formatKennisContext(q: KennisQuery, res: KennisResultaat): strin
       `[DB_INFO] Conflict gedetecteerd in onze collectie:`,
       `- De klant vraagt naar ${lookTxt} als ${q.toepassing}tegel.`,
       `- In onze actuele collectie bestaat ${lookTxt} UITSLUITEND als ${andereToep}tegel — er is GEEN ${q.toepassing}tegel-variant.`,
-      `Vertel de klant hier eerlijk over: ${lookTxt} is bij Lambrechts-Nicolaers niet beschikbaar als ${q.toepassing}tegel, alleen als ${andereToep}tegel. Stel een geschikte alternatieve look voor de gevraagde toepassing voor (uit de collectie). Verzin NIETS bij. Noem GEEN Box-nummers. Keer daarna soepel terug naar het volgende ontbrekende datapunt.`,
+      `Vertel de klant hier eerlijk over: ${lookTxt} is bij Lambrechts-Nicolaers niet beschikbaar als ${q.toepassing}tegel, alleen als ${andereToep}tegel. Stel een geschikte alternatieve look voor de gevraagde toepassing voor (uit de collectie). Verzin NIETS bij. Noem GEEN Expo-nummers. Keer daarna soepel terug naar het volgende ontbrekende datapunt.`,
     ].join("\n");
   }
 
@@ -189,7 +189,7 @@ export function formatKennisContext(q: KennisQuery, res: KennisResultaat): strin
     );
   }
   lines.push(
-    `Gebruik bovenstaande feiten om de klantvraag deskundig te beantwoorden in 2 à 3 vloeiende zinnen. Verzin NOOIT extra kleuren, formaten of toepassingen. Noem GEEN Box-nummers. Keer daarna soepel terug naar het volgende ontbrekende datapunt zodat we tot het eindadvies kunnen komen.`
+    `Gebruik bovenstaande feiten om de klantvraag deskundig te beantwoorden in 2 à 3 vloeiende zinnen. Verzin NOOIT extra kleuren, formaten of toepassingen. Noem GEEN Expo-nummers. Keer daarna soepel terug naar het volgende ontbrekende datapunt zodat we tot het eindadvies kunnen komen.`
   );
   return lines.join("\n");
 }
