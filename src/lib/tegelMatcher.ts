@@ -314,7 +314,7 @@ export async function findBestMatch(c: MatchCriteria): Promise<MatchResult | nul
 /** Formatteer een MatchResult als nette adviestekst voor de klant. */
 export function formatAdvice(m: MatchResult, c: MatchCriteria): string {
   if (m.isFallback) {
-    const boxen = (m.fallbackBoxes ?? []).map((b) => `Expo ${b}`);
+    const boxen = (m.fallbackBoxes ?? []).map((b) => `Box ${b}`);
     const boxenTxt =
       boxen.length === 2 ? `${boxen[0]} en ${boxen[1]}` : boxen.join(", ");
     const kamer = c.kamer && !isOnverschillig(c.kamer) ? c.kamer : "deze ruimte";
@@ -334,7 +334,7 @@ export function formatAdvice(m: MatchResult, c: MatchCriteria): string {
     }
 
     return (
-      `Ik vind geen exacte match voor deze specifieke combinatie, maar onze bestverkochte expo's voor de ${kamer} zijn ${boxenTxt}. ` +
+      `Ik vind geen exacte match voor deze specifieke combinatie, maar onze bestverkochte boxen voor de ${kamer} zijn ${boxenTxt}. ` +
       `Kom gerust langs in de showroom om deze in het echt te bekijken — onze adviseurs helpen u graag persoonlijk verder.`
     );
   }
@@ -347,7 +347,7 @@ export function formatAdvice(m: MatchResult, c: MatchCriteria): string {
   if (m.kleur) txt += ` in ${m.kleur}`;
   if (m.formaat) txt += `, formaat ${m.formaat} cm`;
   txt += ".";
-  txt += `\n\nU kunt deze tegel bekijken in Expo ${m.box} in onze showroom.`;
+  txt += `\n\nU kunt deze tegel bekijken in Box ${m.box} in onze showroom.`;
 
   if (heeftHuisdieren) {
     txt += "\n\nOmdat u huisdieren heeft, is bij deze keuze gelet op het feit dat vuil, haren en vlekken minder zichtbaar zijn.";

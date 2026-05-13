@@ -15,10 +15,10 @@ export const COL = {
   KLEUR: "Kleur",
   HUISDIEREN: "Vuil/haren/vlekken moeilijk zichtbaar?", // boolean (let op het vraagteken)
   // PLAATSING: niet aanwezig in Data LN — wordt alleen in conversatie/log gebruikt, niet voor matching
-  BOX: "Expo",
+  BOX: "Box",
   FORMAAT: "Formaat (cm)",
   VLOER_WAND: "Vloer/Wand", // F* = vloer, W* = wand
-  PREFERENTIE: "Preferentiële boxen", // "aangeraden voor [look]" | "niet aangeraden" | leeg (kolomnaam ongewijzigd in DB)
+  PREFERENTIE: "Preferentiële boxen", // "aangeraden voor [look]" | "niet aangeraden" | leeg
 } as const;
 
 // Tolerant rij-type — kolomnamen bevatten spaties en haakjes, dus indexed access.
