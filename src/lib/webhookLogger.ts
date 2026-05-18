@@ -274,7 +274,7 @@ export interface ExcelPayload {
   Alt2_2_omschrijving: string;
   Volledig_Gesprek: string;
   status: AdviesStatus;
-  Aantal_Sterren: number;
+  Aantal_Sterren: string;
 }
 
 /**
@@ -344,7 +344,7 @@ export function buildPayload(
       return adviesBlok ? `${gesprek}\n\n${adviesBlok}` : gesprek;
     })(),
     status,
-    Aantal_Sterren: options?.rating ?? 0,
+    Aantal_Sterren: String(options?.rating ?? 0),
   };
 }
 
@@ -399,7 +399,7 @@ export async function sendRatingUpdate(
 ): Promise<string | null> {
   const payload = {
     ConversationId: conversationId,
-    Aantal_Sterren: rating,
+    Aantal_Sterren: String(rating),
     IsRatingUpdate: true,
     Datum: new Date().toISOString(),
   };
