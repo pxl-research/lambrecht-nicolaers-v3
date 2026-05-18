@@ -441,7 +441,8 @@ const TegelChat = () => {
         alternatives: realAlternatives,
         primaryLabel,
         secondary: secondaryInfo,
-      }
+      },
+      { conversationId: conversationIdRef.current }
     );
     (payload as unknown as Record<string, string>).Formaat_cm = realFormaat;
     console.log("[Excel-log] Force-advice verzenden:", payload);
@@ -611,7 +612,8 @@ const TegelChat = () => {
         alternatives: realAlternatives,
         primaryLabel,
         secondary: secondaryInfo,
-      }
+      },
+      { conversationId: conversationIdRef.current }
     );
     (payload as unknown as Record<string, string>).Formaat_cm = realFormaat;
 
@@ -651,7 +653,9 @@ const TegelChat = () => {
     const fromLog = lastAssistant ? extractAdvies(lastAssistant.content) : null;
     const advies = fromLog ?? inferAdviesFromTurns(turns, "");
 
-    const payload = buildPayload(advies, turns, "Beëindigd - Off-topic");
+    const payload = buildPayload(advies, turns, "Beëindigd - Off-topic", undefined, {
+      conversationId: conversationIdRef.current,
+    });
     console.log("[Excel-log] Off-topic beëindiging — verzenden:", payload);
     try {
       const error = await sendToExcel(payload);
