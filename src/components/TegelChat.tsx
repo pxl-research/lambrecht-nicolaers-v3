@@ -854,6 +854,16 @@ const TegelChat = () => {
     );
   };
 
+  const handleRate = async (n: number) => {
+    setRating(n);
+    try {
+      const error = await sendRatingUpdate(conversationIdRef.current, n);
+      console.log("[Excel-log] Rating verzonden:", n, error ?? "OK");
+    } catch (err) {
+      console.error("[Excel-log] Rating verzendfout:", err);
+    }
+  };
+
   return (
     <div className="w-full max-w-xl lg:max-w-2xl mx-auto h-full md:h-[82vh] md:max-h-[760px] flex flex-col bg-card md:rounded-2xl md:shadow-float overflow-hidden animate-fade-in">
       <div className="px-4 pt-4 pb-3 md:px-8 md:pt-7 md:pb-5 flex items-center gap-3 md:gap-4 bg-card">
@@ -937,7 +947,8 @@ const TegelChat = () => {
           <div className="mx-8 h-px bg-border/60" />
 
           {adviceGiven || conversationEnded ? (
-            <div className="flex justify-center px-8 py-6 bg-card">
+            <div className="flex flex-col items-center gap-4 px-8 py-6 bg-card">
+              <RatingStars onRate={handleRate} value={rating} />
               <button
                 onClick={handleNewConversation}
                 className="inline-flex items-center gap-2 px-8 py-4 rounded-full cta-red font-body font-medium text-[13px] tracking-wide uppercase"
@@ -963,7 +974,8 @@ const TegelChat = () => {
               </button>
             </div>
           ) : limitReached ? (
-            <div className="flex justify-center px-8 py-6 bg-card">
+            <div className="flex flex-col items-center gap-4 px-8 py-6 bg-card">
+              <RatingStars onRate={handleRate} value={rating} />
               <button
                 onClick={handleNewConversation}
                 className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full border border-primary/70 text-primary text-[13px] font-body font-medium tracking-wide uppercase hover:bg-primary hover:text-primary-foreground transition-colors"
