@@ -12,10 +12,12 @@ import {
   extractAdvies,
   inferAdviesFromTurns,
   sendToExcel,
-  sendRatingUpdate,
+  sendBeacon,
   buildPayload,
   normalizeBoxValue,
   type ConversationTurn,
+  type ExcelPayload,
+  type AdviesStatus,
 } from "@/lib/webhookLogger";
 import { findBestMatch, formatAdvice, type MatchCriteria } from "@/lib/tegelMatcher";
 import { detectKennisQuery, lookupKennis, formatKennisContext } from "@/lib/tegelKennis";
@@ -89,6 +91,51 @@ const TegelChat = () => {
       ? crypto.randomUUID()
       : `conv-${Date.now()}-${Math.random().toString(36).slice(2)}`
   );
+  // Snapshot van de laatst verzonden payload — gebruikt door rating-updates
+  // en de unload-flush, zodat we altijd één volledige rij upserten met
+  // hetzelfde ConversationId in plaats van losse mini-payloads te sturen.
+  const lastPayloadRef = useRef<ExcelPayload | null>(null);
+  const lastFlushSerializedRef = useRef<string>("");
+  const initialLogSentRef = useRef<boolean>(false);
+
+  // Centrale verzendhelper: stuurt naar de webhook én bewaart de payload
+  // in lastPayloadRef voor later hergebruik (rating, unload).
+  const sendPayload = async (payload: ExcelPayload): Promise<string | null> => {
+    lastPayloadRef.current = payload;
+    lastFlushSerializedRef.current = JSON.stringify(payload);
+    console.log("[Excel-log] Verzenden:", payload);
+    const error = await sendToExcel(payload);
+    console.log("[Excel-log] Resultaat:", error ?? "OK");
+    return error;
+  };
+
+  // Flush via sendBeacon bij pagina-unload / tab in background. Stuurt
+  // alleen wanneer er sinds de laatste verzending iets veranderd is.
+  useEffect(() => {
+    const flush = () => {
+      const snapshot = lastPayloadRef.current;
+      if (!snapshot) return;
+      // Markeer als 'Niet afgerond' indien gebruiker stopt zonder advies/rating.
+      const status: AdviesStatus =
+        snapshot.status === "In gesprek" ? "Niet afgerond" : snapshot.status;
+      const payload: ExcelPayload = { ...snapshot, status, Datum: new Date().toISOString() };
+      const serialized = JSON.stringify(payload);
+      if (serialized === lastFlushSerializedRef.current && status === snapshot.status) return;
+      lastFlushSerializedRef.current = serialized;
+      sendBeacon(payload);
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") flush();
+    };
+    window.addEventListener("beforeunload", flush);
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("beforeunload", flush);
+      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, []);
 
   const userMessageCount = messages.filter((m) => m.role === "user").length;
   const limitReached = userMessageCount >= MAX_USER_MESSAGES;
@@ -159,21 +206,33 @@ const TegelChat = () => {
   };
 
   const handleNewConversation = async () => {
-    if (messages.length > 0 && !adviceSentRef.current) {
+    // Als er een actief gesprek loopt zonder eindstatus, log het nog één
+    // keer met een definitieve status (Niet afgerond of de laatst bekende).
+    if (messages.length > 0 && lastPayloadRef.current) {
+      const snap = lastPayloadRef.current;
+      const finalStatus: AdviesStatus =
+        snap.status === "In gesprek" ? "Niet afgerond" : snap.status;
+      if (finalStatus !== snap.status || snap.Aantal_Sterren !== String(rating)) {
+        await sendPayload({
+          ...snap,
+          status: finalStatus,
+          Aantal_Sterren: String(rating),
+          Datum: new Date().toISOString(),
+        });
+      }
+    } else if (messages.length > 0 && !lastPayloadRef.current) {
+      // Fallback: geen snapshot beschikbaar (eerste user-bericht nog niet
+      // gelogd), bouw alsnog een minimale payload op basis van de turns.
       const turns: ConversationTurn[] = messages
         .filter((m) => m.kind !== "system-warning")
         .map((m) => ({ role: m.role, content: m.content }));
-
-      const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
-      const fromLog = lastAssistant ? extractAdvies(lastAssistant.content) : null;
-      const advies = fromLog ?? inferAdviesFromTurns(turns, "");
-
-      const payload = buildPayload(advies, turns, "Niet afgerond", undefined, {
-        conversationId: conversationIdRef.current,
-      });
-      console.log("[Excel-log] Niet afgerond — verzenden:", payload);
-      const error = await sendToExcel(payload);
-      console.log("[Excel-log] Resultaat:", error ?? "OK");
+      const advies = inferAdviesFromTurns(turns, "");
+      await sendPayload(
+        buildPayload(advies, turns, "Niet afgerond", undefined, {
+          conversationId: conversationIdRef.current,
+          rating,
+        })
+      );
     }
 
     adviceSentRef.current = false;
@@ -183,6 +242,9 @@ const TegelChat = () => {
     gratieResetsGebruiktRef.current = 0;
     terminatedRef.current = false;
     vinylPendingRef.current = false;
+    initialLogSentRef.current = false;
+    lastPayloadRef.current = null;
+    lastFlushSerializedRef.current = "";
     conversationIdRef.current =
       typeof crypto !== "undefined" && "randomUUID" in crypto
         ? crypto.randomUUID()
@@ -442,12 +504,10 @@ const TegelChat = () => {
         primaryLabel,
         secondary: secondaryInfo,
       },
-      { conversationId: conversationIdRef.current }
+      { conversationId: conversationIdRef.current, rating }
     );
     (payload as unknown as Record<string, string>).Formaat_cm = realFormaat;
-    console.log("[Excel-log] Force-advice verzenden:", payload);
-    const error = await sendToExcel(payload);
-    console.log("[Excel-log] Resultaat:", error ?? "OK");
+    await sendPayload(payload);
   };
 
   const handleCompletedAssistantMessage = async (
@@ -613,13 +673,11 @@ const TegelChat = () => {
         primaryLabel,
         secondary: secondaryInfo,
       },
-      { conversationId: conversationIdRef.current }
+      { conversationId: conversationIdRef.current, rating }
     );
     (payload as unknown as Record<string, string>).Formaat_cm = realFormaat;
 
-    console.log("[Excel-log] Verzenden:", payload);
-    const error = await sendToExcel(payload);
-    console.log("[Excel-log] Resultaat:", error ?? "OK");
+    await sendPayload(payload);
   };
 
   /**
@@ -655,11 +713,10 @@ const TegelChat = () => {
 
     const payload = buildPayload(advies, turns, "Beëindigd - Off-topic", undefined, {
       conversationId: conversationIdRef.current,
+      rating,
     });
-    console.log("[Excel-log] Off-topic beëindiging — verzenden:", payload);
     try {
-      const error = await sendToExcel(payload);
-      console.log("[Excel-log] Resultaat:", error ?? "OK");
+      await sendPayload(payload);
     } catch (err) {
       console.error("[Excel-log] Fout bij off-topic verzenden:", err);
     }
@@ -672,6 +729,9 @@ const TegelChat = () => {
       offTopicCountRef.current = 0;
       gratieResetsGebruiktRef.current = 0;
       terminatedRef.current = false;
+      initialLogSentRef.current = false;
+      lastPayloadRef.current = null;
+      lastFlushSerializedRef.current = "";
       setMessages([]);
       setIsStreaming(false);
       setStarted(false);
@@ -701,8 +761,19 @@ const TegelChat = () => {
           content:
             "Bedankt voor uw bezoek. Onze verkopers helpen u graag verder in de showroom. Tot snel!",
         };
-        setMessages((prev) => [...prev, userMsg, farewell]);
+        const next = [...messages, userMsg, farewell];
+        setMessages(next);
         setConversationEnded(true);
+        const turns: ConversationTurn[] = next
+          .filter((m) => m.kind !== "system-warning")
+          .map((m) => ({ role: m.role, content: m.content }));
+        const advies = inferAdviesFromTurns(turns, "");
+        await sendPayload(
+          buildPayload(advies, turns, "Vinyl - doorverwezen", undefined, {
+            conversationId: conversationIdRef.current,
+            rating,
+          })
+        );
         return;
       }
     }
@@ -721,6 +792,23 @@ const TegelChat = () => {
 
     // Bereken de nieuwe count INCL. dit bericht
     const newCount = userMessageCount + 1;
+
+    // === Initiële "In gesprek"-write zodra het eerste user-bericht binnenkomt.
+    // Hiermee bestaat de Excel-rij al voordat er een advies of rating is,
+    // zodat eventueel afhaken later netjes als update binnenkomt.
+    if (!initialLogSentRef.current) {
+      initialLogSentRef.current = true;
+      const initialTurns: ConversationTurn[] = [...messages, userMsg]
+        .filter((m) => m.kind !== "system-warning")
+        .map((m) => ({ role: m.role, content: m.content }));
+      const initialAdvies = inferAdviesFromTurns(initialTurns, "");
+      void sendPayload(
+        buildPayload(initialAdvies, initialTurns, "In gesprek", undefined, {
+          conversationId: conversationIdRef.current,
+          rating,
+        })
+      );
+    }
 
     // Bouw de batch bericht-updates op
     const additions: Message[] = [userMsg];
@@ -856,12 +944,26 @@ const TegelChat = () => {
 
   const handleRate = async (n: number) => {
     setRating(n);
-    try {
-      const error = await sendRatingUpdate(conversationIdRef.current, n);
-      console.log("[Excel-log] Rating verzonden:", n, error ?? "OK");
-    } catch (err) {
-      console.error("[Excel-log] Rating verzendfout:", err);
+    const snap = lastPayloadRef.current;
+    if (!snap) {
+      // Geen eerdere log? Bouw minimale payload op basis van huidige messages.
+      const turns: ConversationTurn[] = messages
+        .filter((m) => m.kind !== "system-warning" && m.kind !== "advice")
+        .map((m) => ({ role: m.role, content: m.content }));
+      const advies = inferAdviesFromTurns(turns, "");
+      await sendPayload(
+        buildPayload(advies, turns, "Voltooid", undefined, {
+          conversationId: conversationIdRef.current,
+          rating: n,
+        })
+      );
+      return;
     }
+    await sendPayload({
+      ...snap,
+      Aantal_Sterren: String(n),
+      Datum: new Date().toISOString(),
+    });
   };
 
   return (
