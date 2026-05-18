@@ -4,6 +4,7 @@ import ChatWelcome from "./ChatWelcome";
 import ChatMessage from "./ChatMessage";
 import ChatInput from "./ChatInput";
 import AdviceCard from "./AdviceCard";
+import RatingStars from "./RatingStars";
 import logoLambrechts from "@/assets/logo-lambrechts.png";
 import { streamPuterChat, type ChatMessage as AIChatMessage } from "@/lib/puterAI";
 import {
@@ -11,6 +12,7 @@ import {
   extractAdvies,
   inferAdviesFromTurns,
   sendToExcel,
+  sendRatingUpdate,
   buildPayload,
   normalizeBoxValue,
   type ConversationTurn,
@@ -73,6 +75,7 @@ const TegelChat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [conversationEnded, setConversationEnded] = useState(false);
+  const [rating, setRating] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const adviceSentRef = useRef<boolean>(false);
   const warnedRef = useRef<boolean>(false);
@@ -81,6 +84,11 @@ const TegelChat = () => {
   const gratieResetsGebruiktRef = useRef<number>(0);
   const terminatedRef = useRef<boolean>(false);
   const vinylPendingRef = useRef<boolean>(false);
+  const conversationIdRef = useRef<string>(
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `conv-${Date.now()}-${Math.random().toString(36).slice(2)}`
+  );
 
   const userMessageCount = messages.filter((m) => m.role === "user").length;
   const limitReached = userMessageCount >= MAX_USER_MESSAGES;
@@ -160,7 +168,9 @@ const TegelChat = () => {
       const fromLog = lastAssistant ? extractAdvies(lastAssistant.content) : null;
       const advies = fromLog ?? inferAdviesFromTurns(turns, "");
 
-      const payload = buildPayload(advies, turns, "Niet afgerond");
+      const payload = buildPayload(advies, turns, "Niet afgerond", undefined, {
+        conversationId: conversationIdRef.current,
+      });
       console.log("[Excel-log] Niet afgerond — verzenden:", payload);
       const error = await sendToExcel(payload);
       console.log("[Excel-log] Resultaat:", error ?? "OK");
@@ -173,6 +183,11 @@ const TegelChat = () => {
     gratieResetsGebruiktRef.current = 0;
     terminatedRef.current = false;
     vinylPendingRef.current = false;
+    conversationIdRef.current =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `conv-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    setRating(0);
     setConversationEnded(false);
     setMessages([]);
     setIsStreaming(false);
@@ -426,7 +441,8 @@ const TegelChat = () => {
         alternatives: realAlternatives,
         primaryLabel,
         secondary: secondaryInfo,
-      }
+      },
+      { conversationId: conversationIdRef.current }
     );
     (payload as unknown as Record<string, string>).Formaat_cm = realFormaat;
     console.log("[Excel-log] Force-advice verzenden:", payload);
@@ -596,7 +612,8 @@ const TegelChat = () => {
         alternatives: realAlternatives,
         primaryLabel,
         secondary: secondaryInfo,
-      }
+      },
+      { conversationId: conversationIdRef.current }
     );
     (payload as unknown as Record<string, string>).Formaat_cm = realFormaat;
 
@@ -636,7 +653,9 @@ const TegelChat = () => {
     const fromLog = lastAssistant ? extractAdvies(lastAssistant.content) : null;
     const advies = fromLog ?? inferAdviesFromTurns(turns, "");
 
-    const payload = buildPayload(advies, turns, "Beëindigd - Off-topic");
+    const payload = buildPayload(advies, turns, "Beëindigd - Off-topic", undefined, {
+      conversationId: conversationIdRef.current,
+    });
     console.log("[Excel-log] Off-topic beëindiging — verzenden:", payload);
     try {
       const error = await sendToExcel(payload);
@@ -835,6 +854,16 @@ const TegelChat = () => {
     );
   };
 
+  const handleRate = async (n: number) => {
+    setRating(n);
+    try {
+      const error = await sendRatingUpdate(conversationIdRef.current, n);
+      console.log("[Excel-log] Rating verzonden:", n, error ?? "OK");
+    } catch (err) {
+      console.error("[Excel-log] Rating verzendfout:", err);
+    }
+  };
+
   return (
     <div className="w-full max-w-xl lg:max-w-2xl mx-auto h-full md:h-[82vh] md:max-h-[760px] flex flex-col bg-card md:rounded-2xl md:shadow-float overflow-hidden animate-fade-in">
       <div className="px-4 pt-4 pb-3 md:px-8 md:pt-7 md:pb-5 flex items-center gap-3 md:gap-4 bg-card">
@@ -918,7 +947,8 @@ const TegelChat = () => {
           <div className="mx-8 h-px bg-border/60" />
 
           {adviceGiven || conversationEnded ? (
-            <div className="flex justify-center px-8 py-6 bg-card">
+            <div className="flex flex-col items-center gap-4 px-8 py-6 bg-card">
+              <RatingStars onRate={handleRate} value={rating} />
               <button
                 onClick={handleNewConversation}
                 className="inline-flex items-center gap-2 px-8 py-4 rounded-full cta-red font-body font-medium text-[13px] tracking-wide uppercase"
@@ -944,7 +974,8 @@ const TegelChat = () => {
               </button>
             </div>
           ) : limitReached ? (
-            <div className="flex justify-center px-8 py-6 bg-card">
+            <div className="flex flex-col items-center gap-4 px-8 py-6 bg-card">
+              <RatingStars onRate={handleRate} value={rating} />
               <button
                 onClick={handleNewConversation}
                 className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full border border-primary/70 text-primary text-[13px] font-body font-medium tracking-wide uppercase hover:bg-primary hover:text-primary-foreground transition-colors"

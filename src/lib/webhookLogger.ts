@@ -240,6 +240,7 @@ export interface AdviesDetails {
 
 export interface ExcelPayload {
   Datum: string;
+  ConversationId: string;
   Kamer: string;
   Toepassing: string;
   Look: string;
@@ -273,6 +274,7 @@ export interface ExcelPayload {
   Alt2_2_omschrijving: string;
   Volledig_Gesprek: string;
   status: AdviesStatus;
+  Rating: number;
 }
 
 /**
@@ -290,7 +292,8 @@ export function buildPayload(
   advies: AdviesPayload,
   turns: ConversationTurn[],
   status: AdviesStatus = "Voltooid",
-  details?: AdviesDetails
+  details?: AdviesDetails,
+  options?: { conversationId?: string; rating?: number }
 ): ExcelPayload {
   const alts = details?.alternatives ?? [];
   const alt = (i: number) => alts[i] ?? { box: "", formaat: "", omschrijving: "" };
@@ -304,6 +307,7 @@ export function buildPayload(
   const s2 = sAlt(1);
   return {
     Datum: new Date().toISOString(),
+    ConversationId: options?.conversationId ?? "",
     Kamer: advies.Kamer,
     Toepassing: advies.Toepassing,
     Look: advies.Look,
@@ -340,6 +344,7 @@ export function buildPayload(
       return adviesBlok ? `${gesprek}\n\n${adviesBlok}` : gesprek;
     })(),
     status,
+    Rating: options?.rating ?? 0,
   };
 }
 
@@ -381,4 +386,46 @@ export async function sendAdviesLog(
   turns: ConversationTurn[]
 ): Promise<string | null> {
   return sendToExcel(buildPayload(advies, turns));
+}
+
+/**
+ * Verstuur enkel een rating-update voor een bestaand gesprek.
+ * Power Automate kan op basis van ConversationId de bestaande rij terugvinden
+ * en het Rating-veld bijwerken (IsRatingUpdate=true als marker).
+ */
+export async function sendRatingUpdate(
+  conversationId: string,
+  rating: number
+): Promise<string | null> {
+  const payload = {
+    ConversationId: conversationId,
+    Rating: rating,
+    IsRatingUpdate: true,
+    Datum: new Date().toISOString(),
+  };
+  try {
+    const response = await fetch(LOG_ENDPOINT, {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${CLOUD_KEY}`,
+        apikey: CLOUD_KEY,
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      let extra = "";
+      try {
+        extra = await response.text();
+      } catch {
+        // negeer
+      }
+      return `HTTP ${response.status}${extra ? `: ${extra.slice(0, 120)}` : ""}`;
+    }
+    return null;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return `Fout: ${msg}`;
+  }
 }
