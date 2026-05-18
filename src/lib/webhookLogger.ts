@@ -212,7 +212,9 @@ function formatAdviesBlok(
 export type AdviesStatus =
   | "Voltooid"
   | "Niet afgerond"
-  | "Beëindigd - Off-topic";
+  | "Beëindigd - Off-topic"
+  | "In gesprek"
+  | "Vinyl - doorverwezen";
 
 export interface AdviesAlternatief {
   box: string;
@@ -380,52 +382,20 @@ export async function sendToExcel(payload: ExcelPayload): Promise<string | null>
   }
 }
 
-// Behoud van oude API voor compatibiliteit (fire-and-forget variant).
-export async function sendAdviesLog(
-  advies: AdviesPayload,
-  turns: ConversationTurn[]
-): Promise<string | null> {
-  return sendToExcel(buildPayload(advies, turns));
-}
-
 /**
- * Verstuur enkel een rating-update voor een bestaand gesprek.
- * Power Automate kan op basis van ConversationId de bestaande rij terugvinden
- * en het Rating-veld bijwerken (IsRatingUpdate=true als marker).
+ * Fire-and-forget verzending via navigator.sendBeacon — gebruikt bij
+ * pagina-unload / visibility hidden zodat de browser de POST garandeert
+ * af te leveren zelfs als de tab meteen sluit. sendBeacon ondersteunt
+ * geen custom headers, maar onze edge function accepteert ook calls
+ * zonder Authorization-header (CORS-preflight wordt overgeslagen door
+ * sendBeacon — payload gaat als simple request mee).
  */
-export async function sendRatingUpdate(
-  conversationId: string,
-  rating: number
-): Promise<string | null> {
-  const payload = {
-    ConversationId: conversationId,
-    Aantal_Sterren: String(rating),
-    IsRatingUpdate: true,
-    Datum: new Date().toISOString(),
-  };
+export function sendBeacon(payload: ExcelPayload): boolean {
   try {
-    const response = await fetch(LOG_ENDPOINT, {
-      method: "POST",
-      mode: "cors",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${CLOUD_KEY}`,
-        apikey: CLOUD_KEY,
-      },
-      body: JSON.stringify(payload),
-    });
-    if (!response.ok) {
-      let extra = "";
-      try {
-        extra = await response.text();
-      } catch {
-        // negeer
-      }
-      return `HTTP ${response.status}${extra ? `: ${extra.slice(0, 120)}` : ""}`;
-    }
-    return null;
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return `Fout: ${msg}`;
+    if (typeof navigator === "undefined" || !navigator.sendBeacon) return false;
+    const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+    return navigator.sendBeacon(LOG_ENDPOINT, blob);
+  } catch {
+    return false;
   }
 }
