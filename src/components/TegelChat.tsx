@@ -4,6 +4,7 @@ import ChatWelcome from "./ChatWelcome";
 import ChatMessage from "./ChatMessage";
 import ChatInput from "./ChatInput";
 import AdviceCard from "./AdviceCard";
+import RatingStars from "./RatingStars";
 import logoLambrechts from "@/assets/logo-lambrechts.png";
 import { streamPuterChat, type ChatMessage as AIChatMessage } from "@/lib/puterAI";
 import {
@@ -11,6 +12,7 @@ import {
   extractAdvies,
   inferAdviesFromTurns,
   sendToExcel,
+  sendRatingUpdate,
   buildPayload,
   normalizeBoxValue,
   type ConversationTurn,
@@ -73,6 +75,7 @@ const TegelChat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [conversationEnded, setConversationEnded] = useState(false);
+  const [rating, setRating] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const adviceSentRef = useRef<boolean>(false);
   const warnedRef = useRef<boolean>(false);
@@ -81,6 +84,11 @@ const TegelChat = () => {
   const gratieResetsGebruiktRef = useRef<number>(0);
   const terminatedRef = useRef<boolean>(false);
   const vinylPendingRef = useRef<boolean>(false);
+  const conversationIdRef = useRef<string>(
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `conv-${Date.now()}-${Math.random().toString(36).slice(2)}`
+  );
 
   const userMessageCount = messages.filter((m) => m.role === "user").length;
   const limitReached = userMessageCount >= MAX_USER_MESSAGES;
@@ -160,7 +168,9 @@ const TegelChat = () => {
       const fromLog = lastAssistant ? extractAdvies(lastAssistant.content) : null;
       const advies = fromLog ?? inferAdviesFromTurns(turns, "");
 
-      const payload = buildPayload(advies, turns, "Niet afgerond");
+      const payload = buildPayload(advies, turns, "Niet afgerond", undefined, {
+        conversationId: conversationIdRef.current,
+      });
       console.log("[Excel-log] Niet afgerond — verzenden:", payload);
       const error = await sendToExcel(payload);
       console.log("[Excel-log] Resultaat:", error ?? "OK");
@@ -173,6 +183,11 @@ const TegelChat = () => {
     gratieResetsGebruiktRef.current = 0;
     terminatedRef.current = false;
     vinylPendingRef.current = false;
+    conversationIdRef.current =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `conv-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    setRating(0);
     setConversationEnded(false);
     setMessages([]);
     setIsStreaming(false);
