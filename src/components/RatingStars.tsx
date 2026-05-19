@@ -9,13 +9,11 @@ interface RatingStarsProps {
 
 const RatingStars = ({ onRate, disabled, value = 0 }: RatingStarsProps) => {
   const [hover, setHover] = useState(0);
-  const [submitted, setSubmitted] = useState(value > 0);
   const [current, setCurrent] = useState(value);
 
   const handleClick = (n: number) => {
-    if (disabled || submitted) return;
+    if (disabled) return;
     setCurrent(n);
-    setSubmitted(true);
     onRate(n);
   };
 
@@ -23,8 +21,8 @@ const RatingStars = ({ onRate, disabled, value = 0 }: RatingStarsProps) => {
 
   return (
     <div className="flex flex-col items-center gap-1.5 animate-fade-in">
-      <span className="text-[11px] text-muted-foreground font-body tracking-[0.12em] uppercase">
-        {submitted ? "Bedankt voor uw beoordeling" : "Hoe was uw ervaring?"}
+      <span className="text-[13px] text-foreground font-body font-medium tracking-[0.14em] uppercase">
+        {current > 0 ? "Bedankt voor uw beoordeling" : "Hoe was uw ervaring?"}
       </span>
       <div
         className="flex items-center gap-1"
@@ -37,16 +35,16 @@ const RatingStars = ({ onRate, disabled, value = 0 }: RatingStarsProps) => {
               key={n}
               type="button"
               onClick={() => handleClick(n)}
-              onMouseEnter={() => !submitted && setHover(n)}
-              disabled={disabled || submitted}
+              onMouseEnter={() => setHover(n)}
+              disabled={disabled}
               aria-label={`${n} ${n === 1 ? "ster" : "sterren"}`}
               className="p-0.5 transition-transform hover:scale-110 disabled:hover:scale-100 disabled:cursor-default"
             >
               <Star
                 className={
                   filled
-                    ? "w-5 h-5 fill-primary text-primary"
-                    : "w-5 h-5 text-muted-foreground/40"
+                    ? "w-6 h-6 fill-primary text-primary"
+                    : "w-6 h-6 text-muted-foreground/40"
                 }
                 strokeWidth={1.5}
               />
