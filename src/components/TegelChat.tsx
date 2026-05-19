@@ -1054,9 +1054,9 @@ const TegelChat = () => {
               <RatingStars onRate={handleRate} value={rating} />
               <button
                 onClick={handleNewConversation}
-                className="inline-flex items-center gap-2 px-8 py-4 rounded-full cta-red font-body font-medium text-[13px] tracking-wide uppercase"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-border text-muted-foreground hover:text-foreground hover:border-foreground/40 font-body font-medium text-[11px] tracking-[0.12em] uppercase transition-colors"
               >
-                <RefreshCw className="w-4 h-4" strokeWidth={1.75} />
+                <RefreshCw className="w-3.5 h-3.5" strokeWidth={1.75} />
                 Nieuw gesprek starten
               </button>
             </div>
