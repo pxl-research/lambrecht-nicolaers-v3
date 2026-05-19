@@ -242,6 +242,7 @@ export interface AdviesDetails {
 
 export interface ExcelPayload {
   Datum: string;
+  Tijd: string;
   ConversationId: string;
   Kamer: string;
   Toepassing: string;
@@ -308,7 +309,7 @@ export function buildPayload(
   const s1 = sAlt(0);
   const s2 = sAlt(1);
   return {
-    Datum: new Date().toISOString(),
+    ...brusselsDateTime(),
     ConversationId: options?.conversationId ?? "",
     Kamer: advies.Kamer,
     Toepassing: advies.Toepassing,
