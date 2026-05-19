@@ -15,6 +15,7 @@ import {
   sendBeacon,
   buildPayload,
   normalizeBoxValue,
+  brusselsDateTime,
   type ConversationTurn,
   type ExcelPayload,
   type AdviesStatus,
@@ -118,7 +119,7 @@ const TegelChat = () => {
       // Markeer als 'Niet afgerond' indien gebruiker stopt zonder advies/rating.
       const status: AdviesStatus =
         snapshot.status === "In gesprek" ? "Niet afgerond" : snapshot.status;
-      const payload: ExcelPayload = { ...snapshot, status, Datum: new Date().toISOString() };
+      const payload: ExcelPayload = { ...snapshot, status, ...brusselsDateTime() };
       const serialized = JSON.stringify(payload);
       if (serialized === lastFlushSerializedRef.current && status === snapshot.status) return;
       lastFlushSerializedRef.current = serialized;
@@ -217,7 +218,7 @@ const TegelChat = () => {
           ...snap,
           status: finalStatus,
           Aantal_Sterren: String(rating),
-          Datum: new Date().toISOString(),
+          ...brusselsDateTime(),
         });
       }
     } else if (messages.length > 0 && !lastPayloadRef.current) {
@@ -962,7 +963,7 @@ const TegelChat = () => {
     await sendPayload({
       ...snap,
       Aantal_Sterren: String(n),
-      Datum: new Date().toISOString(),
+      ...brusselsDateTime(),
     });
   };
 

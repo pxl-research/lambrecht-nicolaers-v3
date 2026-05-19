@@ -242,6 +242,7 @@ export interface AdviesDetails {
 
 export interface ExcelPayload {
   Datum: string;
+  Tijd: string;
   ConversationId: string;
   Kamer: string;
   Toepassing: string;
@@ -290,6 +291,23 @@ export function normalizeBoxValue(v: string): string {
   return m ? m[1] : "";
 }
 
+/** Geeft datum en tijd in Europe/Brussels tijdzone, gesplitst. */
+export function brusselsDateTime(d: Date = new Date()): { Datum: string; Tijd: string } {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Brussels",
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+    hour12: false,
+  }).formatToParts(d).reduce<Record<string, string>>((acc, p) => {
+    if (p.type !== "literal") acc[p.type] = p.value;
+    return acc;
+  }, {});
+  return {
+    Datum: `${parts.year}-${parts.month}-${parts.day}`,
+    Tijd: `${parts.hour === "24" ? "00" : parts.hour}:${parts.minute}:${parts.second}`,
+  };
+}
+
 export function buildPayload(
   advies: AdviesPayload,
   turns: ConversationTurn[],
@@ -308,7 +326,7 @@ export function buildPayload(
   const s1 = sAlt(0);
   const s2 = sAlt(1);
   return {
-    Datum: new Date().toISOString(),
+    ...brusselsDateTime(),
     ConversationId: options?.conversationId ?? "",
     Kamer: advies.Kamer,
     Toepassing: advies.Toepassing,
