@@ -108,7 +108,12 @@ export async function streamPuterChat(
     onDone();
   } catch (error) {
     console.error("Mistral AI error:", error);
-    onDelta("Er is helaas iets misgegaan. Probeer het nog eens.");
+    const msg =
+      error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+    onDelta(
+      `Er is helaas iets misgegaan bij het contacteren van de assistent (${msg}). ` +
+        `Controleer je internetverbinding en of een adblocker of VPN geen verbindingen naar supabase.co blokkeert, en probeer het opnieuw.`
+    );
     onDone();
   }
 }
