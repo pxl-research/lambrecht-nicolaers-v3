@@ -1,58 +1,41 @@
-## Bevestigde diagnose
+## Wat er aan de hand is
 
-- Zonder filter: alle rijen terug, kolom `ConversationId` zichtbaar met juiste UUID's.
-- Met filter `ConversationId eq '<uuid>'`: `value: []`.
+De foutmelding "Er is helaas iets misgegaan. Probeer het nog eens." komt uit `src/lib/puterAI.ts` — dat is de catch-tak die **alleen** afgaat als de `fetch()` zelf gooit met een netwerkfout ("Failed to fetch"), dus nog vóór de server antwoordt.
 
-Dit is een bekend gedrag van de Excel Online (Business)-connector: het **tabelschema dat de connector cachet** beschouwt de kolom `ConversationId` niet als een filterbare String. Meestal omdat:
-- De kolom werd toegevoegd nadat de tabel al bestond, of
-- Het kolomtype is gewijzigd nadat er al data in stond, of
-- Er bestaan/bestonden duplicaat-headers waardoor het schema inconsistent is.
+Ik heb de edge function `mistral-chat` net rechtstreeks getest vanuit de sandbox:
 
-Gevolg: filter levert nooit een match → Voorwaarde = Nee → `Update a row` skipt → elke call wordt een Insert.
+- `OPTIONS` preflight → 200 met correcte CORS headers.
+- `POST` met `{"messages":[]}` → 200, stream werkt, Mistral antwoordt netjes met de begroeting.
 
-## Stap 1 — Snelle bevestigingstest (30 seconden)
+Dus **de edge function, CORS en Mistral werken**. Het probleem zit in de browser: `fetch()` faalt daar meteen bij het openen van het gesprek, terwijl dezelfde call uit de sandbox lukt. Dat wijst op iets tussen jouw browser en Supabase (bv. adblocker / privacy-extensie / netwerkfilter / bedrijfs-VPN die `*.supabase.co` blokkeert, of een stale preview-iframe).
 
-Vervang in `List rows` de Filter Query door:
+## Wat ik wil doen
 
-```
-ConversationId ne 'zzz'
-```
+**Stap 1 — betere diagnostiek in de UI (kleine code-wijziging)**
 
-- Krijg je **0 rijen** → kolom is niet filterbaar door de connector → ga naar Stap 2.
-- Krijg je **alle rijen** → filter werkt; dan zit er een verborgen karakter in de celwaarde (zeldzaam met UUID's die je app netjes schrijft) → ga naar Stap 3.
+In `src/lib/puterAI.ts` het `catch`-blok uitbreiden:
+- De concrete error-naam en `message` (bv. `TypeError: Failed to fetch`) tonen aan de gebruiker in plaats van de generieke zin.
+- Een korte hint toevoegen: "controleer je verbinding of een eventuele adblocker/VPN".
+- De volledige error naar `console.error` blijft staan.
 
-## Stap 2 — Tabel hernieuwen (definitieve fix voor 90% van de gevallen)
+Dit is puur een tekstwijziging in de bestaande error-tak — geen wijziging aan business-logica of aan de edge function.
 
-Doe dit in Excel desktop (niet alleen browser):
+**Stap 2 — eerst zonder code wijzigen: 2 snelle tests aan jouw kant**
 
-1. Selecteer een cel in de tabel → tab **Tabelontwerp** → noteer de exacte **Tabelnaam** (heb je later nodig).
-2. Klik **Converteren naar bereik**. Bevestig. (Data blijft staan, alleen tabel-opmaak verdwijnt.)
-3. Selecteer de volledige kolom `ConversationId` → rechtsklik → **Celeigenschappen** → categorie **Tekst** → OK.
-4. Optioneel maar aanbevolen — forceer dat bestaande waardes opnieuw als tekst worden opgeslagen: selecteer de kolom → **Data → Tekst naar kolommen → Vast → Volgende → Volgende → kolomtype Tekst → Voltooien**.
-5. Selecteer het volledige datablok inclusief headers → **Ctrl+T** → vink "Mijn tabel bevat kopteksten" aan → OK.
-6. Tab **Tabelontwerp** → zet de **Tabelnaam** terug op de oorspronkelijke naam.
-7. Bewaar het bestand.
-8. In Power Automate: open `List rows` → klik op de **Tabel**-dropdown → selecteer **dezelfde tabel opnieuw** (dit dwingt de connector om het schema te verversen). Doe hetzelfde voor `Update a row` en `Add a row`. Bewaar de flow.
-9. Test: nieuw gesprek starten in de app → eerste user-bericht → check Excel: 1 nieuwe rij. Verstuur tweede bericht binnen hetzelfde gesprek → check: rij wordt geüpdatet, géén nieuwe rij.
+Voordat ik iets deploy, wil ik graag dat je even twee dingen probeert, want dat lost dit mogelijk direct op zonder wijziging:
 
-## Stap 3 — Als Stap 1 toonde dat het een waarde-issue is
+1. Open de preview in een **nieuw browser-tabblad** (dus niet in de Lovable editor-preview), URL:
+   `https://id-preview--275e6cf1-7bd3-4f33-9bfa-96531352ef57.lovable.app`
+   en klik daar op Start. Werkt dat?
+2. Zo niet: probeer een **incognito-venster** (adblockers/extensies uit) en/of een **ander netwerk** (bv. mobiele hotspot). Werkt dat?
 
-Sleep een **Compose**-actie tussen trigger en `List rows`:
-- Input: `trim(triggerBody()?['ConversationId'])`
-- Zet in de Filter Query: `ConversationId eq '@{outputs('Compose')}'`
+Op basis daarvan weten we of het aan de preview-iframe, aan een browser-extensie of aan je netwerk ligt.
 
-Hiermee strip je eventuele onzichtbare whitespace/newlines die in de payload zouden zitten. Tegelijk maakt de Compose-output zichtbaar in run history wat er exact verstuurd wordt, zodat je het kan vergelijken met wat in Excel staat.
+## Technische details
 
-## Stap 4 — Backup als niks helpt
+- Getest: `curl -X POST https://msoaqydgnawrkyghoiok.supabase.co/functions/v1/mistral-chat …` → HTTP/2 200, `content-type: text/event-stream`, volledige SSE-stream met tokens en `[DONE]`.
+- Edge-function logs voor `mistral-chat`: leeg → jouw browserrequest bereikt de function niet eens, wat bevestigt dat `fetch` client-side faalt vóór de server.
+- De request in het network-panel toont `Error: Failed to fetch` met body `{"messages":[]}` — dat is de correcte payload; niets mis met de request zelf.
+- Bestandswijziging beperkt tot `src/lib/puterAI.ts`, alleen in het `catch (error)`-blok onderaan `streamPuterChat`.
 
-Maak een nieuwe lege Excel:
-- Eén rij met alleen de headers in dezelfde volgorde als nu.
-- Zet `ConversationId` als **Tekst** vóór er één rij data in zit.
-- Ctrl+T om er een tabel van te maken.
-- Sla op in dezelfde map.
-
-Wijs in Power Automate de drie Excel-acties (`List rows`, `Add row`, `Update row`) naar dit nieuwe bestand + nieuwe tabel. Dit elimineert alle legacy schema-issues.
-
-## Geen app-wijzigingen nodig
-
-De frontend stuurt al consistent dezelfde UUID per gesprek; de edge function geeft de payload ongewijzigd door. De oorzaak en de fix zitten 100% aan Excel/Power Automate-kant.
+Laat me weten wat de twee tests opleveren, dan pas ik de error-tekst aan en (indien nodig) zoeken we verder.
